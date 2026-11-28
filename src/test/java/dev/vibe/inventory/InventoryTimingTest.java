@@ -161,6 +161,24 @@ public class InventoryTimingTest {
             module.setEnabled(false);
         }
     }
+    @Test public void aRefusedDropIsNotRetriedEveryInterval() throws Exception {
+        try(AutomationFixture f=new AutomationFixture()){
+            SwallowController controller=new SwallowController(f);f.mc.playerController=controller;
+            InventoryManagerModule module=new InventoryManagerModule();f.base.modules.registerDynamic(module);
+            dev.vibe.module.impl.client.InventoryEditorModule editor=new dev.vibe.module.impl.client.InventoryEditorModule();
+            InventoryLayout layout=editor.getLayout();layout.set(40,InventoryLayout.Type.DISK);editor.setLayout(layout);f.base.modules.registerDynamic(editor);
+            for(Setting<?> s:module.getSettings()){if(s instanceof RangeSetting)((RangeSetting)s).setRange(0,0);if(s.getRawName().equals("Mode"))((ModeSetting)s).setValue("OpenInv");}
+            f.mc.currentScreen=new GuiInventory(f.player);
+            f.player.inventory.setInventorySlotContents(9,new ItemStack(Items.record_13));
+            module.setEnabled(true);module.tick();
+            assertEquals(1,controller.clicks.size());
+            assertArrayEquals(new int[]{9,1,4},controller.clicks.get(0));
+            f.player.ticksExisted++;module.tick();
+            assertEquals(1,controller.clicks.size());
+            assertEquals(Items.record_13,f.player.inventory.getStackInSlot(9).getItem());
+            module.setEnabled(false);
+        }
+    }
     private static final class SwallowController extends PlayerControllerMP {
         final List<int[]> clicks=new ArrayList<int[]>();
         SwallowController(AutomationFixture f){super(f.mc,f.queue);}

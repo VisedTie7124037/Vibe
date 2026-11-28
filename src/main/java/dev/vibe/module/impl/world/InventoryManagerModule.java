@@ -59,6 +59,10 @@ public final class InventoryManagerModule extends Module {
     private long nextAction;
     private int cursorSlot = -1;
     private long cursorUntil;
+    private int dropBlockedSlot = -1;
+    private Item dropBlockedItem;
+    private int dropBlockedDamage;
+    private long dropBlockedUntil;
     private int strikes;
 
     public InventoryManagerModule() {
@@ -159,7 +163,9 @@ public final class InventoryManagerModule extends Module {
             Type type = assignment.getValue();
             ItemStack existing = container.getSlot(target).getStack();
             if (type == Type.BARRIER) {
-                if (existing != null) return protectedFromDrop(existing) ? null : PendingAction.drop(target, existing);
+                if (existing != null && !dropBlocked(target, existing)) {
+                    return protectedFromDrop(existing) ? null : PendingAction.drop(target, existing);
+                }
                 continue;
             }
             int source = findBest(container, layout, type, target);
@@ -210,7 +216,7 @@ public final class InventoryManagerModule extends Module {
         for (int slot : playerSlots()) {
             if (layout.isIgnoredContainerSlot(slot)) continue;
             ItemStack stack = container.getSlot(slot).getStack();
-            if (protectedFromDrop(stack)) continue;
+            if (protectedFromDrop(stack) || dropBlocked(slot, stack)) continue;
             Type type = classify(stack);
             if (type != null && layout.isDropType(type)) return PendingAction.drop(slot, stack);
         }
@@ -221,7 +227,7 @@ public final class InventoryManagerModule extends Module {
         for (int slot : playerSlots()) {
             if (layout.isIgnoredContainerSlot(slot)) continue;
             ItemStack stack = container.getSlot(slot).getStack();
-            if (protectedFromDrop(stack)) continue;
+            if (protectedFromDrop(stack) || dropBlocked(slot, stack)) continue;
             Type type = classify(stack);
             if (type == null || !isUnique(type)) continue;
             int preferred = slot;
@@ -259,13 +265,16 @@ public final class InventoryManagerModule extends Module {
         if (food.size() > maxFoodSlots.getInt()) {
             for (int i = food.size() - 1; i >= 0; i--) {
                 int slot = food.get(i);
-                if (!isReserved(layout, slot, container.getSlot(slot).getStack())) return PendingAction.drop(slot, container.getSlot(slot).getStack());
+                if (!isReserved(layout, slot, container.getSlot(slot).getStack())
+                        && !dropBlocked(slot, container.getSlot(slot).getStack()))
+                    return PendingAction.drop(slot, container.getSlot(slot).getStack());
             }
         }
         if (blocks.size() > maxBlockSlots.getInt()) {
             int smallest = -1;
             for (int slot : blocks) {
                 if (!isReserved(layout, slot, container.getSlot(slot).getStack())
+                        && !dropBlocked(slot, container.getSlot(slot).getStack())
                         && (smallest < 0 || container.getSlot(slot).getStack().stackSize < container.getSlot(smallest).getStack().stackSize)) smallest = slot;
             }
             if (smallest >= 0) return PendingAction.drop(smallest, container.getSlot(smallest).getStack());
@@ -290,9 +299,24 @@ public final class InventoryManagerModule extends Module {
                 return false;
             }
             if (!clicks.click(container, action.slot, 1, 4, interval)) return false;
+            ItemStack after = container.getSlot(action.slot).getStack();
+            boolean removed = after == null || after.getItem() != action.expectedItem
+                    || after.getItemDamage() != action.expectedDamage || after.stackSize < stack.stackSize;
+            if (!removed) {
+                // The drop key was swallowed (drop confirmation, a rejected
+                // transaction or a lagging server). Retrying the same stack
+                // every interval is what caused the endless Q-drop loop, so
+                // leave this exact stack alone for a few seconds.
+                dropBlockedSlot = action.slot;
+                dropBlockedItem = action.expectedItem;
+                dropBlockedDamage = action.expectedDamage;
+                dropBlockedUntil = now + 5000L;
+                return fail(now);
+            }
             cursorSlot = action.slot;
             cursorUntil = now + 450L;
             pendingAction = null;
+            strikes = 0;
             return true;
         }
         if(action.kind==ActionKind.EQUIP){
@@ -432,6 +456,12 @@ public final class InventoryManagerModule extends Module {
         return stack != null && (stack.getItem() == Items.golden_apple
                 || dev.vibe.inventory.DropConfirmation.protects(stack));
     }
+
+    /** A refused drop must not be retried every interval on the same stack. */
+    private boolean dropBlocked(int slot, ItemStack stack) {
+        if (slot != dropBlockedSlot || stack == null || System.currentTimeMillis() >= dropBlockedUntil) return false;
+        return stack.getItem() == dropBlockedItem && stack.getItemDamage() == dropBlockedDamage;
+    }
     public static boolean isReserved(InventoryLayout layout, int containerSlot, ItemStack stack) {
         for (Map.Entry<Integer,Type> entry : layout.assignments().entrySet())
             if (entry.getKey() < 40 && InventoryLayout.toContainerSlot(entry.getKey()) == containerSlot
@@ -458,6 +488,10 @@ public final class InventoryManagerModule extends Module {
         pendingAction = null;
         cursorSlot = -1;
         cursorUntil = 0L;
+        dropBlockedSlot = -1;
+        dropBlockedItem = null;
+        dropBlockedDamage = 0;
+        dropBlockedUntil = 0L;
         strikes = 0;
         clicks.reset();
     }

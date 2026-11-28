@@ -49,10 +49,10 @@ public final class ExtensionIntegrationCheck {
         boolean examplePresent = mode.equals("example") || mode.equals("both") || mode.equals("all") || mode.equals("public");
         boolean cosmeticaPresent = mode.equals("cosmetica") || mode.equals("all") || mode.equals("public");
         Path profile = Files.createTempDirectory(Paths.get(args[0]), mode + "-");
-        Path mods = Files.createDirectories(profile.resolve("vibe/extensions-jar"));
-        if (examplePresent) Files.copy(Paths.get(args[2]), mods.resolve("example.jar"));
-        if (legoPresent) Files.copy(Paths.get(args[3]), mods.resolve("lego.jar"));
-        if (cosmeticaPresent) Files.copy(Paths.get(args[4]), mods.resolve("cosmetica.jar"));
+        Path extensions = Files.createDirectories(profile.resolve("vibe/extensions-jar"));
+        if (examplePresent) Files.copy(Paths.get(args[2]), extensions.resolve("example.jar"));
+        if (legoPresent) Files.copy(Paths.get(args[3]), extensions.resolve("lego.jar"));
+        if (cosmeticaPresent) Files.copy(Paths.get(args[4]), extensions.resolve("cosmetica.jar"));
         Pbuffer buffer = new Pbuffer(64, 64, new PixelFormat(8, 24, 8), null, null); buffer.makeCurrent();
         ExtensionManager extensions = null;
         try {

@@ -29,7 +29,7 @@ The launcher's **Extensions** page enables Cosmetica by default on a fresh profi
 
 The extensions are separate source sets. Core's compile/runtime/test classpaths exclude them. `verifyExtensionPackaging` checks release JAR boundaries and that CustomCosmetics stays in core. With private LEGO sources it also checks the 989 LEGO bundles. `verifyExtensionLoading` checks four public installations, or six installations when LEGO is available, through Forge's classloader and checks event subscriptions, model loading, friend assignments, standing and sneaking accessory layers, capes and texture access after resource reloads. It uses offscreen OpenGL. `testCosmeticaExtension` validates the bundled catalog and existing friend saves. The optional `verifyLegoRendering` retains the full roster, collection/pass and HUD render checks.
 
-For a persistent development launch, copy the selected development extensions to `run/client/mods/`, then run `gradlew runClient -PvibePersistentRun`. The normal `run.bat` OptiFine launch uses release JARs, so use release extensions there. Never install development and release copies of the same extension together.
+For a persistent development launch, copy the selected development extensions to `run/client/vibe/extensions-jar/`, then run `gradlew runClient -PvibePersistentRun`. The normal `run.bat` OptiFine launch uses release JARs, so use release extensions there. Never install development and release copies of the same extension together.
 
 ## Make your own extension
 

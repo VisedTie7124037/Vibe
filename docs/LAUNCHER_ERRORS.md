@@ -965,14 +965,14 @@ The mod is for Forge 1.13 or newer (it contains `META-INF/mods.toml`). Look for 
 ### VL-808
 **Mod already installed**
 
-A file with the same name is already in the mods folder (enabled or disabled). To install a newer
-version, first remove the old one on the Mods page.
+A file with the same name is already in that folder (enabled or disabled). To install a newer
+version, first remove the old one on the Mods or Extensions page.
 
 ### VL-809
 **File name already taken**
 
 When enabling or disabling a mod, the target file already exists, e.g. `Mod.jar` and
-`Mod.jar.disabled` are next to each other. Open the mods folder (Mods page → *Open folder*) and delete one
+`Mod.jar.disabled` are next to each other. Open the matching folder (Mods or Extensions page → *Open folder*) and delete one
 of the two files.
 
 ### VL-810

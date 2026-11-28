@@ -5,7 +5,7 @@ def choicesFile = new File(profile, 'vibe/extensions.properties')
 def choices = new Properties()
 if (choicesFile.isFile()) choicesFile.withInputStream { choices.load(it) }
 def installed = [:]
-[new File(profile, 'mods'), new File(profile, 'mods/1.8.9')].each { folder ->
+[new File(profile, 'vibe/extensions-jar')].each { folder ->
     (folder.listFiles() ?: []).findAll {
         def name = it.name.toLowerCase(Locale.ROOT)
         it.isFile() && (name.endsWith('.jar') || name.endsWith('.jar.disabled'))
@@ -37,7 +37,7 @@ installed.each { id, jar ->
     if (enabled != wanted) switched[id] = new File(jar.parentFile, wanted ? jar.name.substring(0, jar.name.length() - '.disabled'.length()) : jar.name + '.disabled')
 }
 def targets = selected.collectEntries { id ->
-    [(id): switched[id] ?: installed[id] ?: new File(profile, "mods/Vibe-${id.capitalize()}-${project.version}.jar")]
+    [(id): switched[id] ?: installed[id] ?: new File(profile, "vibe/extensions-jar/Vibe-${id.capitalize()}-${project.version}.jar")]
 }
 def prepare = tasks.register('prepareLauncherExtensions') {
     group = 'extensions'
